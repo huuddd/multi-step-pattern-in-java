@@ -45,11 +45,11 @@
 
 | Step | Task | Status |
 |------|------|--------|
-| 2.1 | **ThreadPoolExecutor config:** coreSize, maxSize, queue capacity | ⬜ |
-| 2.2 | **Async model scoring:** CompletableFuture trong pool | ⬜ |
-| 2.3 | **Backpressure:** RejectedExecutionHandler → HTTP 429 | ⬜ |
-| 2.4 | **Graceful shutdown:** awaitTermination + in-flight tracking | ⬜ |
-| 2.5 | **Benchmark + compare:** So sánh với Variant A | ⬜ |
+| 2.1 | **ThreadPoolExecutor config:** coreSize, maxSize, queue capacity | ✅ |
+| 2.2 | **Async model scoring:** CompletableFuture trong pool | ✅ |
+| 2.3 | **Backpressure:** RejectedExecutionHandler → HTTP 429 | ✅ |
+| 2.4 | **Graceful shutdown:** awaitTermination + in-flight tracking | ✅ |
+| 2.5 | **Benchmark + compare:** So sánh với Variant A | ✅ |
 
 **Deliverables:**
 - `source/variants/b_thread_pool/` — thread pool variant
