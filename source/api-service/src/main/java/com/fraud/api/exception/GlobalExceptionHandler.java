@@ -1,5 +1,6 @@
 package com.fraud.api.exception;
 
+import com.fraud.api.config.ThreadPoolConfig.ThreadPoolExhaustedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,10 +11,48 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeoutException;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    private static final int DEFAULT_RETRY_AFTER_SECONDS = 5;
+
+    @ExceptionHandler(ThreadPoolExhaustedException.class)
+    public ResponseEntity<Map<String, Object>> handleThreadPoolExhausted(ThreadPoolExhaustedException ex) {
+        log.warn("Thread pool exhausted: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(DEFAULT_RETRY_AFTER_SECONDS))
+                .body(Map.of(
+                        "error", "SERVICE_OVERLOADED",
+                        "message", "Server is overloaded. Please retry later.",
+                        "retry_after_seconds", DEFAULT_RETRY_AFTER_SECONDS
+                ));
+    }
+
+    @ExceptionHandler(RejectedExecutionException.class)
+    public ResponseEntity<Map<String, Object>> handleRejectedExecution(RejectedExecutionException ex) {
+        log.warn("Task rejected: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(DEFAULT_RETRY_AFTER_SECONDS))
+                .body(Map.of(
+                        "error", "SERVICE_OVERLOADED",
+                        "message", "Server is overloaded. Please retry later.",
+                        "retry_after_seconds", DEFAULT_RETRY_AFTER_SECONDS
+                ));
+    }
+
+    @ExceptionHandler(TimeoutException.class)
+    public ResponseEntity<Map<String, Object>> handleTimeout(TimeoutException ex) {
+        log.warn("Request timeout: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+                .body(Map.of(
+                        "error", "TIMEOUT",
+                        "message", "Request processing timed out. Please retry."
+                ));
+    }
 
     @ExceptionHandler(PaymentNotFoundException.class)
     public ResponseEntity<Map<String, String>> handlePaymentNotFound(PaymentNotFoundException ex) {
