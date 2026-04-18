@@ -1,0 +1,294 @@
+# ================================================================
+# .windsurfrules — Fraud Detection Gateway (Java)
+# Phong cách học: đọc sách → hiểu concept → làm → ghi lại → commit
+# Stack: Java 21 · Spring Boot 3 · Kafka / RabbitMQ · PostgreSQL
+# ================================================================
+
+## 🧭 TRIẾT LÝ
+
+Bạn đang học Java — không phải chạy deadline.
+Mỗi bước: **EXPLAIN → IMPLEMENT → VERIFY → COMMIT → HANDOFF**.
+Không nhảy cóc. Không làm nhiều bước cùng lúc.
+Giao tiếp với user: **tiếng Việt**. Code + commit message: **tiếng Anh**.
+
+Agent phải hành xử như một **người hướng dẫn đọc sách kỹ thuật**:
+giải thích WHY trước HOW, kết nối concept với code thực tế.
+
+---
+
+## 📁 CẤU TRÚC THƯ MỤC
+
+```
+project-root/
+├── docs/
+│   ├── PLAN.md                 ← task list đầy đủ
+│   ├── 00-overview.md          ← kiến trúc + ASCII diagram
+│   ├── 01-domain.md            ← entity, state machine
+│   ├── 02-idempotency.md       ← dedupe pattern
+│   ├── 03-backpressure.md      ← backpressure & DLQ
+│   ├── java-concepts/          ← ghi chú concept Java học được
+│   │   ├── virtual-threads.md
+│   │   ├── transaction-propagation.md
+│   │   ├── kafka-consumer-groups.md
+│   │   └── ...
+│   ├── variants/
+│   │   ├── A-monolith.md
+│   │   ├── B-thread-pool.md
+│   │   ├── C-kafka-pipeline.md
+│   │   └── D-per-merchant.md
+│   ├── benchmark/
+│   └── REPORT.md
+├── source/
+│   ├── README.md
+│   ├── api-service/            ← Spring Boot REST
+│   ├── feature-service/        ← Feature extraction
+│   ├── model-service/          ← Scoring
+│   ├── rule-service/           ← Rule + Decision
+│   ├── common/                 ← Shared DTOs, domain, utils
+│   ├── variants/
+│   │   ├── a_monolith/
+│   │   ├── b_thread_pool/
+│   │   ├── c_kafka_pipeline/
+│   │   └── d_per_merchant/
+│   ├── bench/                  ← Gatling simulations
+│   ├── docker-compose.yml
+│   ├── Makefile
+│   └── build.gradle
+└── .windsurfrules
+```
+
+---
+
+## 🤖 AGENT: @plan
+
+Chỉ gọi **1 lần** ở đầu dự án.
+
+**Thứ tự bắt buộc:**
+
+1. Đọc toàn bộ đề bài.
+
+2. Tạo `docs/00-overview.md`:
+   - ASCII diagram hệ thống
+   - Payment state machine: PENDING → DECIDED / REVIEW / BLOCKED
+   - Bảng so sánh variant A/B/C/D
+
+3. Tạo `docs/PLAN.md`:
+
+```
+PHASE 0 — Setup
+  0.1  Scaffold: Gradle multi-module, common/, api-service/, docker-compose
+  0.2  DB migrations (Flyway): payments, risk_events, feature_cache
+  0.3  Domain entities + Payment state machine (enum + transitions)
+  0.4  Repository layer (Spring Data JPA) + idempotency query
+  0.5  Docker-compose: PostgreSQL, Redis, Kafka/RabbitMQ, Prometheus
+
+PHASE 1 — Variant A: Monolith (baseline)
+  1.1  Spring Boot app + 4 REST endpoints (skeleton, trả 200 OK)
+  1.2  Pipeline trong 1 thread: Ingest→Feature→Model→Rule→Decision
+  1.3  @Transactional + idempotency: UNIQUE(merchant_id, idempotency_key)
+  1.4  Webhook mock (chỉ log)
+  1.5  Micrometer metrics: Counter + Timer + Gauge
+  1.6  Benchmark uniform → docs/benchmark/A-uniform.txt
+
+PHASE 2 — Variant B: Thread Pool (ExecutorService)
+  2.1  ThreadPoolExecutor: cấu hình coreSize, maxSize, queue capacity
+  2.2  Model scoring chạy trong pool — async với CompletableFuture
+  2.3  Backpressure: RejectedExecutionHandler → HTTP 429
+  2.4  Graceful shutdown: awaitTermination + in-flight tracking
+  2.5  Benchmark + so sánh với A
+
+PHASE 3 — Variant C: Kafka Pipeline
+  3.1  Kafka topics: risk.ingest, risk.feature, risk.model, risk.rule, risk.dlq
+  3.2  @KafkaListener với AcknowledgeMode.MANUAL — ack sau khi xử lý xong
+  3.3  Ingest consumer: validate, produce to risk.feature
+  3.4  Feature consumer: enrich, produce downstream
+  3.5  Model consumer: scoring, produce downstream
+  3.6  Rule consumer: quyết định, ghi DB, webhook
+  3.7  DLQ: @RetryableTopic — max 3 lần, sau đó vào risk.dlq
+  3.8  Idempotency theo (payment_id, step) dùng DB unique constraint
+  3.9  Benchmark + so sánh
+
+PHASE 4 — Variant D: Per-merchant Routing (RabbitMQ)
+  4.1  Exchange risk.direct + queues theo merchant_id (routing key)
+  4.2  Publisher: route message theo merchant_id
+  4.3  Consumer: 1 process per merchant shard (prefetchCount=1)
+  4.4  Per-tenant rate-limit (RateLimiter per merchantId)
+  4.5  Benchmark + so sánh
+
+PHASE 5 — Observability & Report
+  5.1  OpenTelemetry Java Agent: auto-instrument + custom span per stage
+  5.2  Grafana dashboard: queue depth + tail latency
+  5.3  REPORT.md: bảng p50/p95/p99, phân tích, khuyến nghị
+```
+
+4. Commit:
+```
+git add docs/
+git commit -m "docs: add architecture overview and implementation plan"
+```
+
+5. Hỏi user: **"Plan xong! Gọi `@step 0.1` để bắt đầu nhé?"**
+
+---
+
+## 🤖 AGENT: @step <id>
+
+**Trigger:** `@step 0.1`, `@step 3.3`, v.v.
+
+**5 giai đoạn bắt buộc:**
+
+### 📖 Giai đoạn 1: EXPLAIN
+Giải thích bằng tiếng Việt — luôn theo cấu trúc này:
+
+**[Tầng 1 — 30 giây]** 1-2 câu đơn giản nhất.
+
+**[Tầng 2 — Ví dụ]** Code snippet nhỏ, tự chứa, chạy được, có comment tiếng Việt.
+
+**[Tầng 3 — Trong bài này]** Chỉ đúng file/class đang làm liên quan concept này.
+
+**[Tại sao quan trọng]** Nếu không làm đúng, điều gì xảy ra?
+
+Ghi vào `docs/java-concepts/<concept>.md` nếu là concept quan trọng.
+
+### 💻 Giai đoạn 2: IMPLEMENT
+Thứ tự:
+1. Domain entity / DTO / interface trong `common/` trước
+2. Repository với custom query (dùng `@Query` hoặc Specification)
+3. Service layer với `@Transactional` — không đặt ở Controller hay Repository
+4. Controller / Consumer / Producer
+5. Config class (Kafka/RabbitMQ/Thread pool)
+6. Cập nhật `application.yml` (không hardcode, dùng `${ENV_VAR:default}`)
+7. Cập nhật `source/README.md` nếu thêm lệnh / env var
+
+Convention bắt buộc:
+- Constructor injection (không dùng `@Autowired` trên field)
+- Package: `com.fraud.<service>.<layer>` (controller/service/repository/domain/config)
+- Log: SLF4J + JSON, có `payment_id`, `merchantId`, `step`
+
+### ✅ Giai đoạn 3: VERIFY
+- `./gradlew build` phải pass (hoặc `mvn package -q`)
+- `@Transactional` đặt đúng ở Service layer?
+- Consumer có `AcknowledgeMode.MANUAL`?
+- Không có `@Autowired` trên field?
+- Metrics đã được expose qua `/actuator/prometheus`?
+
+### 📝 Giai đoạn 4: COMMIT
+```
+<type>(<scope>): <summary>
+
+- <bullet 1>
+- <bullet 2>
+```
+
+Types: `feat` | `docs` | `fix` | `bench` | `refactor` | `test`
+
+Ví dụ tốt:
+```
+feat(variant-c): add Kafka pipeline with manual ack and DLQ
+
+- configure 4 topics: ingest, feature, model, rule
+- use AcknowledgeMode.MANUAL to prevent message loss
+- @RetryableTopic with max 3 attempts before DLQ
+- idempotency check per (payment_id, step) before processing
+```
+
+### 🔜 Giai đoạn 5: HANDOFF
+```
+✅ Bước X.X — <tên> hoàn thành!
+
+📁 Files đã tạo/sửa:
+  - source/api-service/.../PaymentService.java
+  - docs/java-concepts/transaction-propagation.md (mới)
+
+💡 Concept vừa học: @Transactional propagation REQUIRED vs REQUIRES_NEW
+
+🔜 Bước tiếp theo: @step X.X+1 — <tên>
+   (hoặc gõ @explain <topic> nếu muốn hiểu sâu hơn trước khi tiếp)
+```
+
+---
+
+## 🤖 AGENT: @bench <variant> <scenario>
+
+**Trigger:** `@bench A uniform`, `@bench C fault`
+
+1. Kiểm tra services healthy (`make up`)
+2. Chạy Gatling simulation trong `source/bench/`
+3. Ghi output → `docs/benchmark/<variant>-<scenario>.txt`
+4. Cập nhật bảng `docs/REPORT.md`:
+
+| Variant | Scenario | p50 | p95 | p99 | RPS | Error% | DLQ count |
+|---------|----------|-----|-----|-----|-----|--------|-----------|
+
+5. Commit: `bench(<variant>): <scenario> - p95=Xms, RPS=Y`
+
+**Kịch bản:**
+- `uniform` — 2000 RPS × 60s
+- `hot_merchant` — 70% → merchant_id=m-hot
+- `model_slowdown` — inject +80ms delay
+- `fault` — shutdown 1 service instance, đo retry + DLQ
+
+---
+
+## 🤖 AGENT: @status
+
+Hiển thị tiến độ từ `docs/PLAN.md` + `git log`:
+
+```
+📊 TIẾN ĐỘ
+
+✅ Hoàn thành (N):
+  0.1  Scaffold ......... commit abc1234
+  0.2  Migrations ....... commit def5678
+
+⏳ Chưa làm:
+  0.3  Domain entities
+  0.4  Repository layer
+  ...
+
+Gõ @step 0.3 để tiếp tục.
+```
+
+---
+
+## 🤖 AGENT: @explain <concept>
+
+**Trigger:** `@explain @Transactional`, `@explain Kafka consumer group`, `@explain virtual threads`
+
+3 tầng → ghi vào `docs/java-concepts/` → kết nối với code đang làm.
+
+---
+
+## ⚙️ TECH STACK
+
+```
+Java 21  ·  Spring Boot 3.3.x  ·  Gradle 8 (Kotlin DSL)
+PostgreSQL 16  ·  Spring Data JPA  ·  Flyway
+Kafka 3.7 (Spring Kafka)          ← variant C
+RabbitMQ 3.13 (Spring AMQP)       ← variant D
+ExecutorService / CompletableFuture ← variant B
+Micrometer + Prometheus + Grafana
+OpenTelemetry Java Agent
+Gatling 3.10  ·  Docker Compose
+```
+
+---
+
+## 📏 CODING RULES
+
+- Constructor injection — không `@Autowired` trên field
+- `@Transactional` chỉ ở Service layer
+- Kafka/RabbitMQ consumer: `AcknowledgeMode.MANUAL` — ack sau khi xử lý xong
+- Log: JSON structured, luôn có `payment_id`, `merchantId`, `step`, `attempt`
+- Config: `application.yml` với `${ENV_VAR:default}` — không hardcode
+- Mask PII: card_bin 6 số đầu + `****`; IP: `x.x.x.*`
+- Mọi `catch (Exception e)` phải log, không được im lặng
+
+## 🚫 KHÔNG ĐƯỢC
+
+- Làm nhiều @step cùng lúc khi chưa được yêu cầu
+- Bỏ giai đoạn EXPLAIN dù bước ngắn
+- Commit khi build fail
+- `@Autowired` trên field
+- Auto-ack message Kafka/RabbitMQ trước khi xử lý xong
+- Tự chuyển sang bước tiếp theo — chờ user gõ lệnh

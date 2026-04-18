@@ -8,11 +8,11 @@
 
 | Step | Task | Status |
 |------|------|--------|
-| 0.1 | **Scaffold:** Gradle multi-module (common/, api-service/, docker-compose) | ⬜ |
-| 0.2 | **DB migrations (Flyway):** payments, risk_events, feature_cache tables | ⬜ |
-| 0.3 | **Domain entities:** Payment, RiskEvent, PaymentState enum + state machine | ⬜ |
-| 0.4 | **Repository layer:** Spring Data JPA + idempotency query | ⬜ |
-| 0.5 | **Docker-compose:** PostgreSQL, Redis, Kafka, RabbitMQ, Prometheus, Grafana | ⬜ |
+| 0.1 | **Scaffold:** Gradle multi-module (common/, api-service/, docker-compose) | ✅ |
+| 0.2 | **DB migrations (Flyway):** payments, risk_events, feature_cache tables | ✅ |
+| 0.3 | **Domain entities:** Payment, RiskEvent, PaymentState enum + state machine | ✅ |
+| 0.4 | **Repository layer:** Spring Data JPA + idempotency query | ✅ |
+| 0.5 | **Docker-compose:** PostgreSQL, Redis, Kafka, RabbitMQ, Prometheus, Grafana | ✅ |
 
 **Deliverables:**
 - `source/build.gradle.kts` (root)
@@ -27,12 +27,12 @@
 
 | Step | Task | Status |
 |------|------|--------|
-| 1.1 | **REST endpoints skeleton:** 4 APIs trả 200 OK | ⬜ |
-| 1.2 | **Pipeline in-thread:** Ingest → Feature → Model → Rule → Decision | ⬜ |
-| 1.3 | **@Transactional + idempotency:** UNIQUE(merchant_id, idempotency_key) | ⬜ |
-| 1.4 | **Webhook mock:** Log webhook payload (không gọi thật) | ⬜ |
-| 1.5 | **Micrometer metrics:** Counter, Timer, Gauge cho pipeline | ⬜ |
-| 1.6 | **Benchmark uniform:** 2000 RPS × 60s → docs/benchmark/A-uniform.txt | ⬜ |
+| 1.1 | **REST endpoints skeleton:** 4 APIs trả 200 OK | ✅ |
+| 1.2 | **Pipeline in-thread:** Ingest → Feature → Model → Rule → Decision | ✅ |
+| 1.3 | **@Transactional + idempotency:** UNIQUE(merchant_id, idempotency_key) | ✅ |
+| 1.4 | **Webhook mock:** Log webhook payload (không gọi thật) | ✅ |
+| 1.5 | **Micrometer metrics:** Counter, Timer, Gauge cho pipeline | ✅ |
+| 1.6 | **Benchmark uniform:** 2000 RPS × 60s → docs/benchmark/A-uniform.txt | ✅ |
 
 **Deliverables:**
 - `source/variants/a_monolith/` — working monolith
