@@ -103,10 +103,10 @@
 
 | Step | Task | Status |
 |------|------|--------|
-| 5.1 | **OpenTelemetry:** Java Agent auto-instrument + custom span per stage | ⬜ |
-| 5.2 | **Grafana dashboard:** queue depth, tail latency, decision breakdown | ⬜ |
-| 5.3 | **Benchmark scenarios:** hot_merchant, model_slowdown, fault | ⬜ |
-| 5.4 | **REPORT.md:** Bảng p50/p95/p99, phân tích trade-off, khuyến nghị | ⬜ |
+| 5.1 | **OpenTelemetry:** Java Agent auto-instrument + custom span per stage | ✅ |
+| 5.2 | **Grafana dashboard:** queue depth, tail latency, decision breakdown | ✅ |
+| 5.3 | **Benchmark scenarios:** hot_merchant, model_slowdown, fault | ✅ |
+| 5.4 | **REPORT.md:** Bảng p50/p95/p99, phân tích trade-off, khuyến nghị | ✅ |
 
 **Deliverables:**
 - `source/docker-compose.yml` — updated with Jaeger, Grafana
