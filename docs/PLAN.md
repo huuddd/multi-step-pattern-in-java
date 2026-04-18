@@ -63,15 +63,15 @@
 
 | Step | Task | Status |
 |------|------|--------|
-| 3.1 | **Kafka topics:** risk.ingest, risk.feature, risk.model, risk.rule, risk.dlq | ⬜ |
-| 3.2 | **@KafkaListener:** AcknowledgeMode.MANUAL — ack sau khi xử lý xong | ⬜ |
-| 3.3 | **Ingest consumer:** validate, produce to risk.feature | ⬜ |
-| 3.4 | **Feature consumer:** enrich, produce downstream | ⬜ |
-| 3.5 | **Model consumer:** scoring, produce downstream | ⬜ |
-| 3.6 | **Rule consumer:** quyết định, ghi DB, webhook | ⬜ |
-| 3.7 | **DLQ:** @RetryableTopic — max 3 lần, sau đó vào risk.dlq | ⬜ |
-| 3.8 | **Idempotency per step:** (payment_id, step) unique constraint | ⬜ |
-| 3.9 | **Benchmark + compare:** So sánh với A, B | ⬜ |
+| 3.1 | **Kafka topics:** risk.ingest, risk.feature, risk.model, risk.rule, risk.dlq | ✅ |
+| 3.2 | **@KafkaListener:** AcknowledgeMode.MANUAL — ack sau khi xử lý xong | ✅ |
+| 3.3 | **Ingest consumer:** validate, produce to risk.feature | ✅ |
+| 3.4 | **Feature consumer:** enrich, produce downstream | ✅ |
+| 3.5 | **Model consumer:** scoring, produce downstream | ✅ |
+| 3.6 | **Rule consumer:** quyết định, ghi DB, webhook | ✅ |
+| 3.7 | **DLQ:** @RetryableTopic — max 3 lần, sau đó vào risk.dlq | ✅ |
+| 3.8 | **Idempotency per step:** (payment_id, step) unique constraint | ✅ |
+| 3.9 | **Benchmark + compare:** So sánh với A, B | ✅ |
 
 **Deliverables:**
 - `source/variants/c_kafka_pipeline/` — Kafka pipeline variant
