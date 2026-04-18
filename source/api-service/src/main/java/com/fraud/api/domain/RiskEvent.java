@@ -45,6 +45,14 @@ public class RiskEvent {
         createdAt = Instant.now();
     }
 
+    public static RiskEvent started(String paymentId, PipelineStep step) {
+        RiskEvent event = new RiskEvent();
+        event.setPaymentId(paymentId);
+        event.setStep(step);
+        event.setStatus(StepStatus.STARTED);
+        return event;
+    }
+
     public static RiskEvent running(String paymentId, PipelineStep step) {
         RiskEvent event = new RiskEvent();
         event.setPaymentId(paymentId);
