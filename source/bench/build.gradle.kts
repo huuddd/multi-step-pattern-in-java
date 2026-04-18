@@ -12,5 +12,5 @@ dependencies {
 }
 
 gatling {
-    logLevel = "WARN"
+    // logLevel configuration removed - use default
 }
