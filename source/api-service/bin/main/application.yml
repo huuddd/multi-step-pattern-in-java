@@ -34,6 +34,10 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+spring.lifecycle:
+  timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:30s}
 
 management:
   endpoints:
@@ -58,3 +62,13 @@ thread-pool:
     max-size: ${THREAD_POOL_MAX_SIZE:#{T(java.lang.Runtime).getRuntime().availableProcessors() * 2}}
     queue-capacity: ${THREAD_POOL_QUEUE_CAPACITY:500}
     keep-alive-seconds: ${THREAD_POOL_KEEP_ALIVE:60}
+
+# Graceful shutdown configuration
+shutdown:
+  timeout-seconds: ${SHUTDOWN_TIMEOUT_SECONDS:30}
+  force-timeout-seconds: ${SHUTDOWN_FORCE_TIMEOUT_SECONDS:10}
+
+# Pipeline configuration
+pipeline:
+  model:
+    timeout-ms: ${PIPELINE_MODEL_TIMEOUT_MS:5000}
