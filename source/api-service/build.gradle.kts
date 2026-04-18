@@ -22,6 +22,12 @@ dependencies {
     // Kafka
     implementation("org.springframework.kafka:spring-kafka")
     
+    // RabbitMQ
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
+    
+    // Rate Limiting
+    implementation("com.google.guava:guava:33.0.0-jre")
+    
     // Metrics
     implementation("io.micrometer:micrometer-registry-prometheus")
     
