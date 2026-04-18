@@ -85,11 +85,11 @@
 
 | Step | Task | Status |
 |------|------|--------|
-| 4.1 | **Exchange + queues:** risk.direct + queues theo merchant_id | ⬜ |
-| 4.2 | **Publisher:** route message theo merchant_id (routing key) | ⬜ |
-| 4.3 | **Consumer:** 1 process per merchant shard (prefetchCount=1) | ⬜ |
-| 4.4 | **Per-tenant rate-limit:** RateLimiter per merchantId | ⬜ |
-| 4.5 | **Benchmark + compare:** So sánh với A, B, C | ⬜ |
+| 4.1 | **Exchange + queues:** risk.direct + queues theo merchant_id | ✅ |
+| 4.2 | **Publisher:** route message theo merchant_id (routing key) | ✅ |
+| 4.3 | **Consumer:** 1 process per merchant shard (prefetchCount=1) | ✅ |
+| 4.4 | **Per-tenant rate-limit:** RateLimiter per merchantId | ✅ |
+| 4.5 | **Benchmark + compare:** So sánh với A, B, C | ✅ |
 
 **Deliverables:**
 - `source/variants/d_per_merchant/` — RabbitMQ per-merchant variant
